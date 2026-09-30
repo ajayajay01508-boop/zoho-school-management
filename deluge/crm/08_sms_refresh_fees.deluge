@@ -1,0 +1,25 @@
+string standalone.sms_refresh_fees(string invoice_id)
+{
+    if(!invoice_id.matches("[0-9]{1,30}")) { return {"ok":false,"error":"INVALID_ID"}.toString(); }
+    invoice = zoho.crm.getRecordById("Fee_Invoices",invoice_id.toLong(),Map(),"sms_crm");
+    if(invoice.get("id") == null || invoice.get("Total_Fee") == null) { return {"ok":false,"error":"INVOICE_NOT_FOUND"}.toString(); }
+    result = standalone.sms_query("select SUM(Amount) as collected from Payments where (Fee_Invoice = " + invoice_id + " and Payment_State = 'Posted')").toMap();
+    if(result.get("ok") != true) { return result.toString(); }
+    collected = 0.0;
+    if(result.get("data").size() > 0) { collected = ifnull(result.get("data").get(0).get("collected"),0.0).toDecimal(); }
+    total = invoice.get("Total_Fee").toDecimal();
+    if(total < 0 || collected < 0) { return {"ok":false,"error":"INVALID_LEDGER"}.toString(); }
+    outstanding = (total - collected).round(2);
+    credit = 0.0;
+    paymentStatus = "Unpaid";
+    if(collected > 0) { paymentStatus = "Part Paid"; }
+    if(outstanding == 0) { paymentStatus = "Paid"; }
+    if(outstanding < 0)
+    {
+        credit = 0 - outstanding;
+        outstanding = 0.0;
+        paymentStatus = "Credit";
+    }
+    updated = zoho.crm.updateRecord("Fee_Invoices",invoice_id.toLong(),{"Amount_Collected":collected,"Outstanding":outstanding,"Credit_Balance":credit,"Payment_Status":paymentStatus,"Reconciled_At":zoho.currenttime.toString("yyyy-MM-dd'T'HH:mm:ssXXX")},{"trigger":List()},"sms_crm");
+    return {"ok":updated.get("id") != null,"total":total,"collected":collected,"outstanding":outstanding,"credit":credit,"status":paymentStatus}.toString();
+}

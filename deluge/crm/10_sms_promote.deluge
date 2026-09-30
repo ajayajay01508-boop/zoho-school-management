@@ -1,0 +1,31 @@
+string standalone.sms_promote(string previous_enrollment_id,string new_section_id)
+{
+    // Serialized administrator operation. Multi-record CRM writes are not atomic.
+    // Retry this SAME pair after a partial failure; do not run promotions concurrently.
+    if(!previous_enrollment_id.matches("[0-9]{1,30}") || !new_section_id.matches("[0-9]{1,30}"))
+    {
+        return {"ok":false,"error":"INVALID_ID"}.toString();
+    }
+    previous = zoho.crm.getRecordById("Enrollments",previous_enrollment_id.toLong(),Map(),"sms_crm");
+    section = zoho.crm.getRecordById("Class_Sections",new_section_id.toLong(),Map(),"sms_crm");
+    if(previous.get("id") == null || section.get("id") == null) { return {"ok":false,"error":"NOT_FOUND"}.toString(); }
+    year = zoho.crm.getRecordById("Academic_Years",section.get("Academic_Year").get("id").toLong(),Map(),"sms_crm");
+    if(year.get("Start_Date").toDate("yyyy-MM-dd") <= previous.get("End_Date").toDate("yyyy-MM-dd") || year.get("Start_Date").toDate("yyyy-MM-dd") > year.get("End_Date").toDate("yyyy-MM-dd"))
+    {
+        return {"ok":false,"error":"OVERLAPPING_YEAR"}.toString();
+    }
+    if(previous.get("Enrollment_Status") != "Current" && previous.get("Enrollment_Status") != "Completed")
+    {
+        return {"ok":false,"error":"INVALID_PREVIOUS_ENROLLMENT"}.toString();
+    }
+    studentId = previous.get("Student").get("id").toString();
+    data = {"Record_Key":studentId+":"+year.get("id"),"Active_Key":studentId,"Student":{"id":studentId},"Class_Section":{"id":new_section_id},"Start_Date":year.get("Start_Date"),"End_Date":year.get("End_Date"),"Enrollment_Status":"Current"};
+    closed = zoho.crm.updateRecord("Enrollments",previous_enrollment_id.toLong(),{"Enrollment_Status":"Completed","Active_Key":"ARCHIVED:"+previous_enrollment_id},{"trigger":List()},"sms_crm");
+    if(closed.get("id") == null) { return {"ok":false,"error":"PREVIOUS_ENROLLMENT_CLOSE_FAILED"}.toString(); }
+    created = standalone.sms_insert_once("Enrollments",data.toString(),"Record_Key").toMap();
+    if(created.get("ok") != true)
+    {
+        created.put("recovery","Previous enrollment is Completed. Retry the same pair; inspect active enrollment before any manual rollback.");
+    }
+    return created.toString();
+}

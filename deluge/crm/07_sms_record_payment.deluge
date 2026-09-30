@@ -1,0 +1,23 @@
+string standalone.sms_record_payment(string invoice_id,string amount_text,string payment_reference,string date_text)
+{
+    if(!invoice_id.matches("[0-9]{1,30}") || !amount_text.matches("[0-9]{1,10}([.][0-9]{1,2})?") || !payment_reference.matches("[A-Za-z0-9_-]{3,100}") || !date_text.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}"))
+    {
+        return {"ok":false,"error":"INVALID_PAYMENT_INPUT"}.toString();
+    }
+    amount = amount_text.toDecimal();
+    if(amount <= 0 || date_text.toDate("yyyy-MM-dd") > zoho.currentdate)
+    {
+        return {"ok":false,"error":"INVALID_PAYMENT_AMOUNT_OR_DATE"}.toString();
+    }
+    invoice = zoho.crm.getRecordById("Fee_Invoices",invoice_id.toLong(),Map(),"sms_crm");
+    if(invoice.get("id") == null || invoice.get("Total_Fee") == null || invoice.get("Total_Fee").toDecimal() < 0)
+    {
+        return {"ok":false,"error":"INVALID_INVOICE"}.toString();
+    }
+    data = {"Payment_Reference":payment_reference.toUpperCase(),"Fee_Invoice":{"id":invoice_id},"Amount":amount,"Payment_Date":date_text,"Payment_State":"Posted"};
+    saved = standalone.sms_insert_once("Payments",data.toString(),"Payment_Reference").toMap();
+    if(saved.get("ok") != true) { return saved.toString(); }
+    balance = standalone.sms_refresh_fees(invoice_id).toMap();
+    saved.put("summary_updated",balance.get("ok"));
+    return saved.toString();
+}

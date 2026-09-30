@@ -1,0 +1,15 @@
+void automation.sms_admission_workflow(string lead_id)
+{
+    try
+    {
+        result = standalone.sms_confirm_admission(lead_id).toMap();
+        if(result.get("ok") != true)
+        {
+            failure = zoho.crm.updateRecord("Leads",lead_id.toLong(),{"Admission_Error":ifnull(result.get("error"),"UNKNOWN_ERROR")},{"trigger":List()},"sms_crm");
+        }
+    }
+    catch (e)
+    {
+        failure = zoho.crm.updateRecord("Leads",lead_id.toLong(),{"Admission_Error":"AUTOMATION_FAILED_REVIEW_AND_RETRY"},{"trigger":List()},"sms_crm");
+    }
+}

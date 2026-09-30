@@ -1,0 +1,19 @@
+string standalone.sms_reconcile_batch(string after_id,string entity)
+{
+    if(!after_id.matches("[0-9]{1,30}") || !{"Fee_Invoices","Enrollments"}.contains(entity))
+    {
+        return {"ok":false,"error":"INVALID_BATCH"}.toString();
+    }
+    page = standalone.sms_query("select id from "+entity+" where id > "+after_id+" order by id asc limit 25").toMap();
+    if(page.get("ok") != true) { return page.toString(); }
+    cursor = after_id;
+    for each item in page.get("data")
+    {
+        recordId = item.get("id").toString();
+        if(entity == "Fee_Invoices") { result = standalone.sms_refresh_fees(recordId).toMap(); }
+        else { result = standalone.sms_refresh_attendance(recordId).toMap(); }
+        if(result.get("ok") != true) { return {"ok":false,"error":"RECONCILIATION_FAILED","next_after":cursor}.toString(); }
+        cursor = recordId;
+    }
+    return {"ok":true,"next_after":cursor,"more_records":page.get("more_records")}.toString();
+}

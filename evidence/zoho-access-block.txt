@@ -1,0 +1,5 @@
+Observed 27 September 2026 on Zoho Accounts after following the Creator Sign In link.
+
+Website message: The browser version that you are using is outdated and not secure. Update the browser to the latest version to continue using Zoho services.
+
+No authenticated session or successful deployment was observed.

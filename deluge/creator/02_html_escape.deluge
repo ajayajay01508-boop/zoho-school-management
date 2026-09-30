@@ -1,0 +1,8 @@
+string html_escape(string value)
+{
+    // Third argument true means literal replacement, not a regular expression.
+    safe = ifnull(value,"").replaceAll("&","&amp;",true);
+    safe = safe.replaceAll("<","&lt;",true).replaceAll(">","&gt;",true);
+    safe = safe.replaceAll("\"","&quot;",true).replaceAll("'","&#39;",true);
+    return safe;
+}

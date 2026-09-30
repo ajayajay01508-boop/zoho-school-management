@@ -1,0 +1,37 @@
+void overdue_scheduler()
+{
+    // INTERNAL admin schedule only; do not share its config form with parents.
+    // Create Job_State form and fields per DEPLOYMENT.md, and one Name=overdue row.
+    state = Job_State[Name == "overdue"];
+    todayText = zoho.currentdate.toString("yyyy-MM-dd");
+    if(state.count() != 1) { info "Exactly one overdue job state is required"; return; }
+    if(state.Run_Date != zoho.currentdate)
+    {
+        state.Run_Date = zoho.currentdate;
+        state.Cursor_ID = "0";
+        state.Is_Complete = false;
+    }
+    if(state.Is_Complete == true) { return; }
+    // Small bounded batches fit within Deluge execution limits. Cron resumes cursor.
+    response = invokeurl
+    [
+        url :"https://www.zohoapis.in/crm/v8/functions/sms_overdue_batch/actions/execute?auth_type=oauth"
+        type :POST
+        parameters:{"arguments":{"after_id":ifnull(state.Cursor_ID,"0")}.toString()}
+        connection:"crm_scheduler"
+    ];
+    if(response.get("code") != "success" || response.get("details") == null)
+    {
+        state.Last_Error = "CRM_FUNCTION_CALL_FAILED";
+        return;
+    }
+    output = response.get("details").get("output").toMap();
+    if(output.get("next_after") != null) { state.Cursor_ID = output.get("next_after").toString(); }
+    if(output.get("ok") != true)
+    {
+        state.Last_Error = ifnull(output.get("error"),"OVERDUE_JOB_FAILED");
+        return;
+    }
+    state.Last_Error = "";
+    state.Is_Complete = output.get("more_records") != true;
+}

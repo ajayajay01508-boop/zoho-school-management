@@ -1,0 +1,35 @@
+string standalone.sms_overdue_batch(string after_id)
+{
+    // Admin-only scheduled batch. Persist returned next_after outside this call.
+    // Query scans all overdue invoices, including stale cached Paid invoices.
+    if(!after_id.matches("[0-9]{1,30}")) { return {"ok":false,"error":"INVALID_CURSOR"}.toString(); }
+    todayText = zoho.currentdate.toString("yyyy-MM-dd");
+    q = "select id from Fee_Invoices where (Due_Date < '"+todayText+"' and id > " + after_id + ") order by id asc limit 25";
+    page = standalone.sms_query(q).toMap();
+    if(page.get("ok") != true) { return page.toString(); }
+    lastId = after_id;
+    created = 0;
+    for each invoice in page.get("data")
+    {
+        invoiceId = invoice.get("id").toString();
+        balance = standalone.sms_refresh_fees(invoiceId).toMap();
+        if(balance.get("ok") != true)
+        {
+            return {"ok":false,"error":"RECONCILIATION_FAILED","next_after":lastId}.toString();
+        }
+        if(balance.get("outstanding") > 0)
+        {
+            followKey = invoiceId+":"+todayText;
+            // The same daily item retains its first observed balance on retries.
+            data = {"Record_Key":followKey,"Fee_Invoice":{"id":invoiceId},"Review_Date":todayText,"Balance_At_Review":balance.get("outstanding"),"Follow_Up_Status":"Open"};
+            saved = standalone.sms_insert_once("Fee_Follow_Ups",data.toString(),"Record_Key").toMap();
+            if(saved.get("ok") != true && saved.get("error") != "RETRY_PAYLOAD_CONFLICT")
+            {
+                return {"ok":false,"error":"FOLLOW_UP_FAILED","next_after":lastId}.toString();
+            }
+            if(saved.get("ok") == true && saved.get("replayed") != true) { created = created + 1; }
+        }
+        lastId = invoiceId;
+    }
+    return {"ok":true,"created":created,"next_after":lastId,"more_records":page.get("more_records")}.toString();
+}

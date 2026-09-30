@@ -1,0 +1,68 @@
+<%{
+    sid = ifnull(input.sid,"");
+    eid = ifnull(input.eid,"");
+    category = ifnull(input.category,"attendance");
+    pageText = ifnull(input.p,"0");
+    pageIndex = 0;
+    data = {"ok":false,"error":"Invalid request"};
+    if(pageText.matches("[0-9]{1,4}"))
+    {
+        pageIndex = pageText.toLong();
+        try
+        {
+            data = thisapp.parent_data(sid,eid,category,pageIndex);
+        }
+        catch (err)
+        {
+            data = {"ok":false,"error":"School data could not be loaded. Please try again or contact the school."};
+        }
+    }
+%>
+<style>
+.sms{font-family:Arial,sans-serif;color:#183044;max-width:1080px;margin:auto;padding:28px;background:#f6f8fb}
+.sms h1{font-size:28px;margin:5px 0 12px}.sms h2{font-size:20px}.sms .muted{color:#536575;font-size:14px}
+.sms nav{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.sms a{color:#075b68;padding:10px 14px;background:white;border:1px solid #b8cfd4;border-radius:6px;text-decoration:none}
+.sms a:focus{outline:3px solid #bc7500}.sms .active{background:#075b68;color:white}.sms .scroll{overflow:auto;background:white;border:1px solid #d7e0e9;border-radius:8px}
+.sms table{border-collapse:collapse;width:100%}.sms th,.sms td{text-align:left;padding:14px;border-bottom:1px solid #e3e9ef;white-space:nowrap}.sms th{background:#e8f0f4}.sms .error{color:#902c28}
+</style>
+<main class="sms">
+<div class="muted">SCHOOL MANAGEMENT SYSTEM · PARENT PORTAL</div>
+<h1>Your child at school</h1>
+<% if(data.get("ok") != true) { %>
+<p class="error"><%=thisapp.html_escape(data.get("error").toString())%></p>
+<% } else { %>
+<p class="muted">Read-only school records retrieved from Zoho CRM. Refresh this page for the latest information.</p>
+<nav aria-label="Choose child">
+<% for each child in data.get("children") { %>
+<a href="#Page:Parent_Home?sid=<%=child.get("Student").get("id")%>&amp;category=attendance&amp;p=0"><%=thisapp.html_escape(child.get("Child_Name").toString())%></a>
+<% } %>
+</nav>
+<h2><%=thisapp.html_escape(data.get("profile").get("Child_Name").toString())%></h2>
+<p>Student ID <strong><%=thisapp.html_escape(data.get("profile").get("Student_Number").toString())%></strong> · <%=thisapp.html_escape(data.get("enrollment").get("Section_Name").toString())%> · <%=thisapp.html_escape(data.get("enrollment").get("Enrollment_Status").toString())%></p>
+<nav aria-label="Academic history">
+<% for each enrollment in data.get("enrollments") { %>
+<a href="#Page:Parent_Home?sid=<%=data.get("student_id")%>&amp;eid=<%=enrollment.get("id")%>&amp;category=attendance&amp;p=0"><%=thisapp.html_escape(enrollment.get("Academic_Year").toString())%> · <%=thisapp.html_escape(enrollment.get("Section_Name").toString())%></a>
+<% } %>
+</nav>
+<nav aria-label="Student records">
+<% for each viewName in {"attendance","results","fees","payments"} { activeClass = ""; if(viewName == category) { activeClass = "active"; } %>
+<a class="<%=activeClass%>" href="#Page:Parent_Home?sid=<%=data.get("student_id")%>&amp;eid=<%=data.get("enrollment_id")%>&amp;category=<%=viewName%>&amp;p=0"><%=viewName%></a>
+<% } %>
+</nav>
+<div class="scroll"><table><thead><tr>
+<% for each heading in data.get("columns") { %><th scope="col"><%=heading%></th><% } %>
+</tr></thead><tbody>
+<% for each row in data.get("data") { %><tr><% for each heading in data.get("columns") { %>
+<td><%=thisapp.html_escape(ifnull(row.get(heading),"—").toString())%></td>
+<% } %></tr><% } %>
+</tbody></table></div>
+<% if(data.get("data").isEmpty()) { %><p>No records to display for this view.</p><% } %>
+<nav aria-label="Pagination">
+<% if(pageIndex > 0) { %><a href="#Page:Parent_Home?sid=<%=data.get("student_id")%>&amp;eid=<%=data.get("enrollment_id")%>&amp;category=<%=category%>&amp;p=<%=pageIndex-1%>">Previous</a><% } %>
+<% if(data.get("more") == true && pageIndex < 9999) { %><a href="#Page:Parent_Home?sid=<%=data.get("student_id")%>&amp;eid=<%=data.get("enrollment_id")%>&amp;category=<%=category%>&amp;p=<%=pageIndex+1%>">Next</a><% } %>
+</nav>
+<p class="muted">All amounts are INR. Only published examination results appear here. Voided payments stay visible for audit history and do not count toward fees collected.</p>
+<% } %>
+<p class="muted">Implementation prepared for Ajay S</p>
+</main>
+<% } %>

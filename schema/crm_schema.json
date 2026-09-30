@@ -1,0 +1,985 @@
+{
+  "version": 1,
+  "timezone": "Asia/Kolkata",
+  "currency": "INR",
+  "live_deployed": false,
+  "modules": [
+    {
+      "api_name": "Academic_Years",
+      "singular_label": "Academic Year",
+      "plural_label": "Academic Years",
+      "auto_prefix": null,
+      "purpose": "Academic year boundaries",
+      "fields": [
+        {
+          "api_name": "Record_Key",
+          "field_label": "Record Key",
+          "data_type": "text",
+          "required": true,
+          "note": "",
+          "unique": {
+            "case_sensitive": false
+          }
+        },
+        {
+          "api_name": "Start_Date",
+          "field_label": "Start Date",
+          "data_type": "date",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "End_Date",
+          "field_label": "End Date",
+          "data_type": "date",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Is_Current",
+          "field_label": "Is Current",
+          "data_type": "boolean",
+          "required": true,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "api_name": "School_Classes",
+      "singular_label": "School Class",
+      "plural_label": "School Classes",
+      "auto_prefix": null,
+      "purpose": "Reusable grades",
+      "fields": [
+        {
+          "api_name": "Record_Key",
+          "field_label": "Record Key",
+          "data_type": "text",
+          "required": true,
+          "note": "",
+          "unique": {
+            "case_sensitive": false
+          }
+        },
+        {
+          "api_name": "Sort_Order",
+          "field_label": "Sort Order",
+          "data_type": "integer",
+          "required": true,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "api_name": "Class_Sections",
+      "singular_label": "Class Section",
+      "plural_label": "Class Sections",
+      "auto_prefix": null,
+      "purpose": "A class section for one academic year",
+      "fields": [
+        {
+          "api_name": "Record_Key",
+          "field_label": "Record Key",
+          "data_type": "text",
+          "required": true,
+          "note": "",
+          "unique": {
+            "case_sensitive": false
+          }
+        },
+        {
+          "api_name": "Academic_Year",
+          "field_label": "Academic Year",
+          "data_type": "lookup",
+          "required": true,
+          "note": "",
+          "target": "Academic_Years"
+        },
+        {
+          "api_name": "School_Class",
+          "field_label": "School Class",
+          "data_type": "lookup",
+          "required": true,
+          "note": "",
+          "target": "School_Classes"
+        },
+        {
+          "api_name": "Section_Label",
+          "field_label": "Section Label",
+          "data_type": "text",
+          "required": true,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "api_name": "Subjects",
+      "singular_label": "Subject",
+      "plural_label": "Subjects",
+      "auto_prefix": null,
+      "purpose": "Subject catalogue",
+      "fields": [
+        {
+          "api_name": "Record_Key",
+          "field_label": "Record Key",
+          "data_type": "text",
+          "required": true,
+          "note": "",
+          "unique": {
+            "case_sensitive": false
+          }
+        }
+      ]
+    },
+    {
+      "api_name": "Teachers",
+      "singular_label": "Teacher",
+      "plural_label": "Teachers",
+      "auto_prefix": null,
+      "purpose": "Teacher roster",
+      "fields": [
+        {
+          "api_name": "Record_Key",
+          "field_label": "Record Key",
+          "data_type": "text",
+          "required": true,
+          "note": "",
+          "unique": {
+            "case_sensitive": false
+          }
+        },
+        {
+          "api_name": "Email",
+          "field_label": "Email",
+          "data_type": "email",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Is_Active",
+          "field_label": "Is Active",
+          "data_type": "boolean",
+          "required": true,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "api_name": "Teaching_Assignments",
+      "singular_label": "Teaching Assignment",
+      "plural_label": "Teaching Assignments",
+      "auto_prefix": null,
+      "purpose": "Subject and teacher allocation for a section",
+      "fields": [
+        {
+          "api_name": "Record_Key",
+          "field_label": "Record Key",
+          "data_type": "text",
+          "required": true,
+          "note": "",
+          "unique": {
+            "case_sensitive": false
+          }
+        },
+        {
+          "api_name": "Class_Section",
+          "field_label": "Class Section",
+          "data_type": "lookup",
+          "required": true,
+          "note": "",
+          "target": "Class_Sections"
+        },
+        {
+          "api_name": "Subject",
+          "field_label": "Subject",
+          "data_type": "lookup",
+          "required": true,
+          "note": "",
+          "target": "Subjects"
+        },
+        {
+          "api_name": "Teacher",
+          "field_label": "Teacher",
+          "data_type": "lookup",
+          "required": true,
+          "note": "",
+          "target": "Teachers"
+        }
+      ]
+    },
+    {
+      "api_name": "Guardians",
+      "singular_label": "Guardian",
+      "plural_label": "Guardians",
+      "auto_prefix": null,
+      "purpose": "Verified parent identity; admin managed",
+      "fields": [
+        {
+          "api_name": "Email_Key",
+          "field_label": "Email Key",
+          "data_type": "text",
+          "required": false,
+          "note": "SHA256 of trimmed lowercase Email; populated before verification",
+          "unique": {
+            "case_sensitive": false
+          }
+        },
+        {
+          "api_name": "Email",
+          "field_label": "Email",
+          "data_type": "email",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Identity_Verified",
+          "field_label": "Identity Verified",
+          "data_type": "boolean",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Portal_Enabled",
+          "field_label": "Portal Enabled",
+          "data_type": "boolean",
+          "required": true,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "api_name": "Students",
+      "singular_label": "Student",
+      "plural_label": "Students",
+      "auto_prefix": "STU",
+      "purpose": "One permanent student identity; Name is the generated Student ID",
+      "fields": [
+        {
+          "api_name": "Admission_Key",
+          "field_label": "Admission Key",
+          "data_type": "text",
+          "required": true,
+          "note": "",
+          "unique": {
+            "case_sensitive": false
+          }
+        },
+        {
+          "api_name": "Full_Name",
+          "field_label": "Full Name",
+          "data_type": "text",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Date_Of_Birth",
+          "field_label": "Date Of Birth",
+          "data_type": "date",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Student_Status",
+          "field_label": "Student Status",
+          "data_type": "picklist",
+          "required": true,
+          "note": "",
+          "values": [
+            "Active",
+            "Withdrawn",
+            "Graduated"
+          ]
+        }
+      ]
+    },
+    {
+      "api_name": "Student_Guardians",
+      "singular_label": "Student Guardian",
+      "plural_label": "Student Guardians",
+      "auto_prefix": null,
+      "purpose": "Many to many verified parent access grants",
+      "fields": [
+        {
+          "api_name": "Record_Key",
+          "field_label": "Record Key",
+          "data_type": "text",
+          "required": true,
+          "note": "",
+          "unique": {
+            "case_sensitive": false
+          }
+        },
+        {
+          "api_name": "Student",
+          "field_label": "Student",
+          "data_type": "lookup",
+          "required": true,
+          "note": "",
+          "target": "Students"
+        },
+        {
+          "api_name": "Guardian",
+          "field_label": "Guardian",
+          "data_type": "lookup",
+          "required": true,
+          "note": "",
+          "target": "Guardians"
+        },
+        {
+          "api_name": "Relationship",
+          "field_label": "Relationship",
+          "data_type": "picklist",
+          "required": true,
+          "note": "",
+          "values": [
+            "Parent",
+            "Legal Guardian"
+          ]
+        },
+        {
+          "api_name": "Access_Enabled",
+          "field_label": "Access Enabled",
+          "data_type": "boolean",
+          "required": true,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "api_name": "Enrollments",
+      "singular_label": "Enrollment",
+      "plural_label": "Enrollments",
+      "auto_prefix": "ENR",
+      "purpose": "Immutable historical enrollment with explicit attendance interval",
+      "fields": [
+        {
+          "api_name": "Record_Key",
+          "field_label": "Record Key",
+          "data_type": "text",
+          "required": true,
+          "note": "",
+          "unique": {
+            "case_sensitive": false
+          }
+        },
+        {
+          "api_name": "Active_Key",
+          "field_label": "Active Key",
+          "data_type": "text",
+          "required": true,
+          "note": "",
+          "unique": {
+            "case_sensitive": false
+          }
+        },
+        {
+          "api_name": "Student",
+          "field_label": "Student",
+          "data_type": "lookup",
+          "required": true,
+          "note": "",
+          "target": "Students"
+        },
+        {
+          "api_name": "Class_Section",
+          "field_label": "Class Section",
+          "data_type": "lookup",
+          "required": true,
+          "note": "",
+          "target": "Class_Sections"
+        },
+        {
+          "api_name": "Start_Date",
+          "field_label": "Start Date",
+          "data_type": "date",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "End_Date",
+          "field_label": "End Date",
+          "data_type": "date",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Enrollment_Status",
+          "field_label": "Enrollment Status",
+          "data_type": "picklist",
+          "required": true,
+          "note": "",
+          "values": [
+            "Current",
+            "Completed",
+            "Withdrawn"
+          ]
+        },
+        {
+          "api_name": "Attendance_Percent",
+          "field_label": "Attendance Percent",
+          "data_type": "percent",
+          "required": false,
+          "note": ""
+        },
+        {
+          "api_name": "Marked_Days",
+          "field_label": "Marked Days",
+          "data_type": "integer",
+          "required": false,
+          "note": ""
+        },
+        {
+          "api_name": "Unmarked_Days",
+          "field_label": "Unmarked Days",
+          "data_type": "integer",
+          "required": false,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "api_name": "School_Days",
+      "singular_label": "School Day",
+      "plural_label": "School Days",
+      "auto_prefix": null,
+      "purpose": "Teaching day calendar; weekends and holidays exist only if explicitly configured",
+      "fields": [
+        {
+          "api_name": "Record_Key",
+          "field_label": "Record Key",
+          "data_type": "text",
+          "required": true,
+          "note": "",
+          "unique": {
+            "case_sensitive": false
+          }
+        },
+        {
+          "api_name": "Class_Section",
+          "field_label": "Class Section",
+          "data_type": "lookup",
+          "required": true,
+          "note": "",
+          "target": "Class_Sections"
+        },
+        {
+          "api_name": "School_Date",
+          "field_label": "School Date",
+          "data_type": "date",
+          "required": true,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "api_name": "Attendance",
+      "singular_label": "Attendance Entry",
+      "plural_label": "Attendance",
+      "auto_prefix": "ATT",
+      "purpose": "Exactly one daily mark per enrollment",
+      "fields": [
+        {
+          "api_name": "Record_Key",
+          "field_label": "Record Key",
+          "data_type": "text",
+          "required": true,
+          "note": "",
+          "unique": {
+            "case_sensitive": false
+          }
+        },
+        {
+          "api_name": "Enrollment",
+          "field_label": "Enrollment",
+          "data_type": "lookup",
+          "required": true,
+          "note": "",
+          "target": "Enrollments"
+        },
+        {
+          "api_name": "Attendance_Date",
+          "field_label": "Attendance Date",
+          "data_type": "date",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Attendance_Status",
+          "field_label": "Attendance Status",
+          "data_type": "picklist",
+          "required": true,
+          "note": "",
+          "values": [
+            "Present",
+            "Absent",
+            "Late",
+            "Excused"
+          ]
+        },
+        {
+          "api_name": "Present_Units",
+          "field_label": "Present Units",
+          "data_type": "double",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Eligible_Units",
+          "field_label": "Eligible Units",
+          "data_type": "integer",
+          "required": true,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "api_name": "Examinations",
+      "singular_label": "Examination",
+      "plural_label": "Examinations",
+      "auto_prefix": null,
+      "purpose": "Examination event for one section",
+      "fields": [
+        {
+          "api_name": "Record_Key",
+          "field_label": "Record Key",
+          "data_type": "text",
+          "required": true,
+          "note": "",
+          "unique": {
+            "case_sensitive": false
+          }
+        },
+        {
+          "api_name": "Class_Section",
+          "field_label": "Class Section",
+          "data_type": "lookup",
+          "required": true,
+          "note": "",
+          "target": "Class_Sections"
+        },
+        {
+          "api_name": "Exam_Date",
+          "field_label": "Exam Date",
+          "data_type": "date",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Is_Published",
+          "field_label": "Is Published",
+          "data_type": "boolean",
+          "required": true,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "api_name": "Exam_Papers",
+      "singular_label": "Exam Paper",
+      "plural_label": "Exam Papers",
+      "auto_prefix": null,
+      "purpose": "Subject paper with its own marks scale",
+      "fields": [
+        {
+          "api_name": "Record_Key",
+          "field_label": "Record Key",
+          "data_type": "text",
+          "required": true,
+          "note": "",
+          "unique": {
+            "case_sensitive": false
+          }
+        },
+        {
+          "api_name": "Examination",
+          "field_label": "Examination",
+          "data_type": "lookup",
+          "required": true,
+          "note": "",
+          "target": "Examinations"
+        },
+        {
+          "api_name": "Teaching_Assignment",
+          "field_label": "Teaching Assignment",
+          "data_type": "lookup",
+          "required": true,
+          "note": "",
+          "target": "Teaching_Assignments"
+        },
+        {
+          "api_name": "Max_Marks",
+          "field_label": "Max Marks",
+          "data_type": "double",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Pass_Marks",
+          "field_label": "Pass Marks",
+          "data_type": "double",
+          "required": true,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "api_name": "Results",
+      "singular_label": "Result",
+      "plural_label": "Results",
+      "auto_prefix": "RES",
+      "purpose": "Student paper result; scale snapshots prevent retroactive distortion",
+      "fields": [
+        {
+          "api_name": "Record_Key",
+          "field_label": "Record Key",
+          "data_type": "text",
+          "required": true,
+          "note": "",
+          "unique": {
+            "case_sensitive": false
+          }
+        },
+        {
+          "api_name": "Enrollment",
+          "field_label": "Enrollment",
+          "data_type": "lookup",
+          "required": true,
+          "note": "",
+          "target": "Enrollments"
+        },
+        {
+          "api_name": "Exam_Paper",
+          "field_label": "Exam Paper",
+          "data_type": "lookup",
+          "required": true,
+          "note": "",
+          "target": "Exam_Papers"
+        },
+        {
+          "api_name": "Marks",
+          "field_label": "Marks",
+          "data_type": "double",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Was_Absent",
+          "field_label": "Was Absent",
+          "data_type": "boolean",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Max_Marks_Snapshot",
+          "field_label": "Max Marks Snapshot",
+          "data_type": "double",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Pass_Marks_Snapshot",
+          "field_label": "Pass Marks Snapshot",
+          "data_type": "double",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Percentage",
+          "field_label": "Percentage",
+          "data_type": "percent",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Outcome",
+          "field_label": "Outcome",
+          "data_type": "picklist",
+          "required": true,
+          "note": "",
+          "values": [
+            "Pass",
+            "Fail",
+            "Absent"
+          ]
+        }
+      ]
+    },
+    {
+      "api_name": "Fee_Invoices",
+      "singular_label": "Fee Invoice",
+      "plural_label": "Fee Invoices",
+      "auto_prefix": "INV",
+      "purpose": "A charge with derived ledger totals",
+      "fields": [
+        {
+          "api_name": "Record_Key",
+          "field_label": "Record Key",
+          "data_type": "text",
+          "required": true,
+          "note": "",
+          "unique": {
+            "case_sensitive": false
+          }
+        },
+        {
+          "api_name": "Enrollment",
+          "field_label": "Enrollment",
+          "data_type": "lookup",
+          "required": true,
+          "note": "",
+          "target": "Enrollments"
+        },
+        {
+          "api_name": "Total_Fee",
+          "field_label": "Total Fee",
+          "data_type": "currency",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Due_Date",
+          "field_label": "Due Date",
+          "data_type": "date",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Amount_Collected",
+          "field_label": "Amount Collected",
+          "data_type": "currency",
+          "required": false,
+          "note": ""
+        },
+        {
+          "api_name": "Outstanding",
+          "field_label": "Outstanding",
+          "data_type": "currency",
+          "required": false,
+          "note": ""
+        },
+        {
+          "api_name": "Credit_Balance",
+          "field_label": "Credit Balance",
+          "data_type": "currency",
+          "required": false,
+          "note": ""
+        },
+        {
+          "api_name": "Payment_Status",
+          "field_label": "Payment Status",
+          "data_type": "picklist",
+          "required": false,
+          "note": "",
+          "values": [
+            "Unpaid",
+            "Part Paid",
+            "Paid",
+            "Credit"
+          ]
+        },
+        {
+          "api_name": "Reconciled_At",
+          "field_label": "Reconciled At",
+          "data_type": "datetime",
+          "required": false,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "api_name": "Payments",
+      "singular_label": "Payment",
+      "plural_label": "Payments",
+      "auto_prefix": "PAY",
+      "purpose": "Append only installment ledger; voids require administrator reason",
+      "fields": [
+        {
+          "api_name": "Payment_Reference",
+          "field_label": "Payment Reference",
+          "data_type": "text",
+          "required": true,
+          "note": "",
+          "unique": {
+            "case_sensitive": false
+          }
+        },
+        {
+          "api_name": "Fee_Invoice",
+          "field_label": "Fee Invoice",
+          "data_type": "lookup",
+          "required": true,
+          "note": "",
+          "target": "Fee_Invoices"
+        },
+        {
+          "api_name": "Amount",
+          "field_label": "Amount",
+          "data_type": "currency",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Payment_Date",
+          "field_label": "Payment Date",
+          "data_type": "date",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Payment_State",
+          "field_label": "Payment State",
+          "data_type": "picklist",
+          "required": true,
+          "note": "",
+          "values": [
+            "Posted",
+            "Void"
+          ]
+        },
+        {
+          "api_name": "Void_Reason",
+          "field_label": "Void Reason",
+          "data_type": "text",
+          "required": false,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "api_name": "Fee_Follow_Ups",
+      "singular_label": "Fee Follow Up",
+      "plural_label": "Fee Follow Ups",
+      "auto_prefix": "FLW",
+      "purpose": "Deduplicated daily overdue work queue",
+      "fields": [
+        {
+          "api_name": "Record_Key",
+          "field_label": "Record Key",
+          "data_type": "text",
+          "required": true,
+          "note": "",
+          "unique": {
+            "case_sensitive": false
+          }
+        },
+        {
+          "api_name": "Fee_Invoice",
+          "field_label": "Fee Invoice",
+          "data_type": "lookup",
+          "required": true,
+          "note": "",
+          "target": "Fee_Invoices"
+        },
+        {
+          "api_name": "Review_Date",
+          "field_label": "Review Date",
+          "data_type": "date",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Balance_At_Review",
+          "field_label": "Balance At Review",
+          "data_type": "currency",
+          "required": true,
+          "note": ""
+        },
+        {
+          "api_name": "Follow_Up_Status",
+          "field_label": "Follow Up Status",
+          "data_type": "picklist",
+          "required": true,
+          "note": "",
+          "values": [
+            "Open",
+            "Resolved"
+          ]
+        },
+        {
+          "api_name": "Resolution_Note",
+          "field_label": "Resolution Note",
+          "data_type": "text",
+          "required": false,
+          "note": ""
+        }
+      ]
+    }
+  ],
+  "leads_fields": [
+    {
+      "api_name": "Child_Name",
+      "field_label": "Child Name",
+      "data_type": "text",
+      "required": true,
+      "note": ""
+    },
+    {
+      "api_name": "Child_DOB",
+      "field_label": "Child DOB",
+      "data_type": "date",
+      "required": true,
+      "note": ""
+    },
+    {
+      "api_name": "Enrollment_Start",
+      "field_label": "Enrollment Start",
+      "data_type": "date",
+      "required": false,
+      "note": "Required before approval; supports midyear admissions"
+    },
+    {
+      "api_name": "Admission_Status",
+      "field_label": "Admission Status",
+      "data_type": "picklist",
+      "required": true,
+      "note": "",
+      "values": [
+        "New",
+        "Contacted",
+        "Visit Scheduled",
+        "Documents Pending",
+        "Approved",
+        "Confirmed",
+        "Rejected"
+      ]
+    },
+    {
+      "api_name": "Requested_Section",
+      "field_label": "Requested Section",
+      "data_type": "lookup",
+      "required": false,
+      "note": "",
+      "target": "Class_Sections"
+    },
+    {
+      "api_name": "Verified_Guardian",
+      "field_label": "Verified Guardian",
+      "data_type": "lookup",
+      "required": false,
+      "note": "",
+      "target": "Guardians"
+    },
+    {
+      "api_name": "Admitted_Student",
+      "field_label": "Admitted Student",
+      "data_type": "lookup",
+      "required": false,
+      "note": "",
+      "target": "Students"
+    },
+    {
+      "api_name": "Admission_Error",
+      "field_label": "Admission Error",
+      "data_type": "text",
+      "required": false,
+      "note": ""
+    },
+    {
+      "api_name": "Parent_Consent",
+      "field_label": "Parent Consent",
+      "data_type": "boolean",
+      "required": true,
+      "note": ""
+    }
+  ]
+}

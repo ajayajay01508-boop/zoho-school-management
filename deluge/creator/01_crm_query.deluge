@@ -1,0 +1,17 @@
+map crm_query(string query_text)
+{
+    // Internal Creator function. Never expose arbitrary queries through a custom API.
+    response = invokeurl
+    [
+        url :"https://www.zohoapis.in/crm/v8/coql"
+        type :POST
+        parameters:{"select_query":query_text}.toString()
+        headers:{"Content-Type":"application/json"}
+        connection:"crm_parent_read"
+    ];
+    if(response == null || response.toString() == "") { return {"ok":true,"data":List(),"more":false}; }
+    if(response.get("code") != null) { return {"ok":false,"error":"School data is temporarily unavailable"}; }
+    more = false;
+    if(response.get("info") != null) { more = ifnull(response.get("info").get("more_records"),false); }
+    return {"ok":true,"data":ifnull(response.get("data"),List()),"more":more};
+}

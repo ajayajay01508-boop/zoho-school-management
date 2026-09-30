@@ -1,0 +1,34 @@
+string standalone.sms_refresh_attendance(string enrollment_id)
+{
+    if(!enrollment_id.matches("[0-9]{1,30}")) { return {"ok":false,"error":"INVALID_ID"}.toString(); }
+    enrollment = zoho.crm.getRecordById("Enrollments",enrollment_id.toLong(),Map(),"sms_crm");
+    if(enrollment.get("id") == null) { return {"ok":false,"error":"NOT_FOUND"}.toString(); }
+    q = "select COUNT(id) as marked, SUM(Present_Units) as present, SUM(Eligible_Units) as eligible from Attendance where Enrollment = " + enrollment_id;
+    result = standalone.sms_query(q).toMap();
+    if(result.get("ok") != true) { return result.toString(); }
+    marked = 0;
+    eligible = 0;
+    present = 0;
+    if(result.get("data").size() > 0)
+    {
+        values = result.get("data").get(0);
+        marked = ifnull(values.get("marked"),0);
+        eligible = ifnull(values.get("eligible"),0);
+        present = ifnull(values.get("present"),0);
+    }
+    endDay = enrollment.get("End_Date").toDate("yyyy-MM-dd");
+    if(endDay > zoho.currentdate) { endDay = zoho.currentdate; }
+    startText = enrollment.get("Start_Date");
+    sectionId = enrollment.get("Class_Section").get("id").toString();
+    query = "select COUNT(id) as expected from School_Days where (Class_Section = " + sectionId + " and (School_Date >= '"+startText+"' and School_Date <= '"+endDay.toString("yyyy-MM-dd")+"'))";
+    calendar = standalone.sms_query(query).toMap();
+    if(calendar.get("ok") != true) { return calendar.toString(); }
+    expected = 0;
+    if(calendar.get("data").size() > 0) { expected = ifnull(calendar.get("data").get(0).get("expected"),0); }
+    missing = expected - marked;
+    if(missing < 0) { return {"ok":false,"error":"CALENDAR_INCONSISTENT"}.toString(); }
+    percentage = null;
+    if(eligible > 0) { percentage = (present * 100.0 / eligible).round(2); }
+    updated = zoho.crm.updateRecord("Enrollments",enrollment_id.toLong(),{"Attendance_Percent":percentage,"Marked_Days":marked,"Unmarked_Days":missing},{"trigger":List()},"sms_crm");
+    return {"ok":updated.get("id") != null,"percent":percentage,"marked":marked,"unmarked":missing}.toString();
+}

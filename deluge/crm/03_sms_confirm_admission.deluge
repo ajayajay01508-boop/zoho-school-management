@@ -1,0 +1,50 @@
+string standalone.sms_confirm_admission(string lead_id)
+{
+    if(!lead_id.matches("[0-9]{1,30}"))
+    {
+        return {"ok":false,"error":"INVALID_LEAD"}.toString();
+    }
+    lead = zoho.crm.getRecordById("Leads",lead_id.toLong(),Map(),"sms_crm");
+    if(lead.get("Admission_Status") != "Approved" && lead.get("Admission_Status") != "Confirmed")
+    {
+        return {"ok":false,"error":"ADMISSION_NOT_APPROVED"}.toString();
+    }
+    if(lead.get("Child_Name") == null || lead.get("Child_DOB") == null || lead.get("Enrollment_Start") == null || lead.get("Requested_Section") == null || lead.get("Verified_Guardian") == null || lead.get("Parent_Consent") != true)
+    {
+        return {"ok":false,"error":"MISSING_ADMISSION_FIELDS"}.toString();
+    }
+    guardianId = lead.get("Verified_Guardian").get("id").toString();
+    guardian = zoho.crm.getRecordById("Guardians",guardianId.toLong(),Map(),"sms_crm");
+    if(guardian.get("Identity_Verified") != true)
+    {
+        return {"ok":false,"error":"GUARDIAN_NOT_VERIFIED"}.toString();
+    }
+    sectionId = lead.get("Requested_Section").get("id").toString();
+    section = zoho.crm.getRecordById("Class_Sections",sectionId.toLong(),Map(),"sms_crm");
+    year = zoho.crm.getRecordById("Academic_Years",section.get("Academic_Year").get("id").toLong(),Map(),"sms_crm");
+    if(year.get("Start_Date") == null || year.get("End_Date") == null || year.get("Start_Date").toDate("yyyy-MM-dd") > year.get("End_Date").toDate("yyyy-MM-dd") || lead.get("Child_DOB").toDate("yyyy-MM-dd") >= year.get("Start_Date").toDate("yyyy-MM-dd"))
+    {
+        return {"ok":false,"error":"INVALID_ACADEMIC_DATES"}.toString();
+    }
+    admissionStart = lead.get("Enrollment_Start").toDate("yyyy-MM-dd");
+    if(admissionStart < year.get("Start_Date").toDate("yyyy-MM-dd") || admissionStart > year.get("End_Date").toDate("yyyy-MM-dd"))
+    {
+        return {"ok":false,"error":"ENROLLMENT_START_OUTSIDE_YEAR"}.toString();
+    }
+    studentData = {"Admission_Key":lead_id,"Full_Name":lead.get("Child_Name"),"Date_Of_Birth":lead.get("Child_DOB"),"Student_Status":"Active"};
+    saved = standalone.sms_insert_once("Students",studentData.toString(),"Admission_Key").toMap();
+    if(saved.get("ok") != true) { return saved.toString(); }
+    studentId = saved.get("id").toString();
+    enrollmentData = {"Record_Key":studentId + ":" + year.get("id"),"Active_Key":studentId,"Student":{"id":studentId},"Class_Section":{"id":sectionId},"Start_Date":lead.get("Enrollment_Start"),"End_Date":year.get("End_Date"),"Enrollment_Status":"Current"};
+    enrolled = standalone.sms_insert_once("Enrollments",enrollmentData.toString(),"Record_Key").toMap();
+    if(enrolled.get("ok") != true) { return enrolled.toString(); }
+    grantData = {"Name":"Verified guardian","Record_Key":studentId+":"+guardianId,"Student":{"id":studentId},"Guardian":{"id":guardianId},"Relationship":"Parent","Access_Enabled":true};
+    grant = standalone.sms_insert_once("Student_Guardians",grantData.toString(),"Record_Key").toMap();
+    if(grant.get("ok") != true) { return grant.toString(); }
+    updated = zoho.crm.updateRecord("Leads",lead_id.toLong(),{"Admission_Status":"Confirmed","Admitted_Student":{"id":studentId},"Admission_Error":""},{"trigger":List()},"sms_crm");
+    if(updated.get("id") == null)
+    {
+        return {"ok":false,"error":"LEAD_FINALIZATION_FAILED","retry_safe":true}.toString();
+    }
+    return {"ok":true,"student_id":studentId,"enrollment_id":enrolled.get("id")}.toString();
+}

@@ -1,0 +1,29 @@
+string standalone.sms_query(string query_text)
+{
+    // Internal helper. Do NOT expose this function as a public or portal API.
+    // Configure sms_crm as an org-owned OAuth connection in the same data centre.
+    request = Map();
+    request.put("select_query",query_text);
+    response = invokeurl
+    [
+        url :"https://www.zohoapis.in/crm/v8/coql"
+        type :POST
+        parameters:request.toString()
+        headers:{"Content-Type":"application/json"}
+        connection:"sms_crm"
+    ];
+    if(response == null || response.toString() == "")
+    {
+        return {"ok":true,"data":List(),"more_records":false}.toString();
+    }
+    if(response.get("code") != null)
+    {
+        return {"ok":false,"error":response.get("code")}.toString();
+    }
+    more = false;
+    if(response.get("info") != null)
+    {
+        more = ifnull(response.get("info").get("more_records"),false);
+    }
+    return {"ok":true,"data":ifnull(response.get("data"),List()),"more_records":more}.toString();
+}

@@ -1,0 +1,55 @@
+string standalone.sms_insert_once(string module_api,string record_json,string key_field)
+{
+    // Internal create-only helper; database unique fields arbitrate concurrent retries.
+    record = record_json.toMap();
+    payload = Map();
+    rows = List();
+    rows.add(record);
+    payload.put("data",rows);
+    payload.put("trigger",List());
+    payload.put("apply_feature_execution",{{"name":"criteria_validation_rule"}});
+    response = invokeurl
+    [
+        url :"https://www.zohoapis.in/crm/v8/" + module_api
+        type :POST
+        parameters:payload.toString()
+        headers:{"Content-Type":"application/json"}
+        connection:"sms_crm"
+    ];
+    if(response == null || response.get("data") == null)
+    {
+        return {"ok":false,"error":"CREATE_FAILED"}.toString();
+    }
+    result = response.get("data").get(0);
+    if(result.get("status") == "success")
+    {
+        return {"ok":true,"id":result.get("details").get("id"),"replayed":false}.toString();
+    }
+    if(result.get("code") != "DUPLICATE_DATA" || result.get("details").get("id") == null)
+    {
+        return {"ok":false,"error":result.get("code")}.toString();
+    }
+    recordId = result.get("details").get("id").toString();
+    existing = zoho.crm.getRecordById(module_api,recordId.toLong(),Map(),"sms_crm");
+    if(existing.get(key_field) != record.get(key_field))
+    {
+        return {"ok":false,"error":"OTHER_UNIQUE_CONSTRAINT"}.toString();
+    }
+    for each fieldName in record.keys()
+    {
+        expected = record.get(fieldName);
+        actual = existing.get(fieldName);
+        if(expected != null && expected.toString().startsWith("{\"id\""))
+        {
+            if(actual == null || actual.get("id").toString() != expected.get("id").toString())
+            {
+                return {"ok":false,"error":"RETRY_PAYLOAD_CONFLICT"}.toString();
+            }
+        }
+        else if(actual != expected)
+        {
+            return {"ok":false,"error":"RETRY_PAYLOAD_CONFLICT"}.toString();
+        }
+    }
+    return {"ok":true,"id":recordId,"replayed":true}.toString();
+}

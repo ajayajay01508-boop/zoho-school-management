@@ -1,0 +1,35 @@
+string standalone.sms_record_result(string enrollment_id,string paper_id,string marks_text,bool was_absent)
+{
+    if(!enrollment_id.matches("[0-9]{1,30}") || !paper_id.matches("[0-9]{1,30}") || !marks_text.matches("[0-9]+([.][0-9]{1,2})?"))
+    {
+        return {"ok":false,"error":"INVALID_RESULT_INPUT"}.toString();
+    }
+    enrollment = zoho.crm.getRecordById("Enrollments",enrollment_id.toLong(),Map(),"sms_crm");
+    paper = zoho.crm.getRecordById("Exam_Papers",paper_id.toLong(),Map(),"sms_crm");
+    if(enrollment.get("id") == null || paper.get("id") == null) { return {"ok":false,"error":"NOT_FOUND"}.toString(); }
+    exam = zoho.crm.getRecordById("Examinations",paper.get("Examination").get("id").toLong(),Map(),"sms_crm");
+    allocation = zoho.crm.getRecordById("Teaching_Assignments",paper.get("Teaching_Assignment").get("id").toLong(),Map(),"sms_crm");
+    if(exam.get("Is_Published") == true) { return {"ok":false,"error":"EXAM_LOCKED"}.toString(); }
+    sectionId = enrollment.get("Class_Section").get("id").toString();
+    if(exam.get("Class_Section").get("id").toString() != sectionId || allocation.get("Class_Section").get("id").toString() != sectionId)
+    {
+        return {"ok":false,"error":"SECTION_MISMATCH"}.toString();
+    }
+    examDay = exam.get("Exam_Date").toDate("yyyy-MM-dd");
+    if(examDay > zoho.currentdate || examDay < enrollment.get("Start_Date").toDate("yyyy-MM-dd") || examDay > enrollment.get("End_Date").toDate("yyyy-MM-dd"))
+    {
+        return {"ok":false,"error":"EXAM_DATE_OUTSIDE_ENROLLMENT"}.toString();
+    }
+    marks = marks_text.toDecimal();
+    maximum = paper.get("Max_Marks").toDecimal();
+    passing = paper.get("Pass_Marks").toDecimal();
+    if(maximum <= 0 || passing < 0 || passing > maximum || marks > maximum || (was_absent && marks != 0))
+    {
+        return {"ok":false,"error":"INVALID_MARKS"}.toString();
+    }
+    outcome = "Fail";
+    if(marks >= passing) { outcome = "Pass"; }
+    if(was_absent) { outcome = "Absent"; }
+    data = {"Record_Key":enrollment_id+":"+paper_id,"Enrollment":{"id":enrollment_id},"Exam_Paper":{"id":paper_id},"Marks":marks,"Was_Absent":was_absent,"Max_Marks_Snapshot":maximum,"Pass_Marks_Snapshot":passing,"Percentage":(marks*100.0/maximum).round(2),"Outcome":outcome};
+    return standalone.sms_insert_once("Results",data.toString(),"Record_Key");
+}

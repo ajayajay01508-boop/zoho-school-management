@@ -1,0 +1,15 @@
+string standalone.sms_create_invoice(string enrollment_id,string invoice_reference,string amount_text,string due_date)
+{
+    if(!enrollment_id.matches("[0-9]{1,30}") || !invoice_reference.matches("[A-Za-z0-9_-]{3,100}") || !amount_text.matches("[0-9]{1,10}([.][0-9]{1,2})?") || !due_date.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}"))
+    {
+        return {"ok":false,"error":"INVALID_INVOICE_INPUT"}.toString();
+    }
+    parsedDate = due_date.toDate("yyyy-MM-dd");
+    enrollment = zoho.crm.getRecordById("Enrollments",enrollment_id.toLong(),Map(),"sms_crm");
+    if(enrollment.get("id") == null) { return {"ok":false,"error":"ENROLLMENT_NOT_FOUND"}.toString(); }
+    saved = standalone.sms_insert_once("Fee_Invoices",{"Record_Key":enrollment_id+":"+invoice_reference.toUpperCase(),"Enrollment":{"id":enrollment_id},"Total_Fee":amount_text.toDecimal(),"Due_Date":due_date}.toString(),"Record_Key").toMap();
+    if(saved.get("ok") != true) { return saved.toString(); }
+    summary = standalone.sms_refresh_fees(saved.get("id").toString()).toMap();
+    saved.put("summary_updated",summary.get("ok"));
+    return saved.toString();
+}

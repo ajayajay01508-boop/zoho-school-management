@@ -1,0 +1,50 @@
+LOCAL PYTHON REFERENCE AND PACKAGE TESTS ONLY
+Not Deluge runtime, Zoho integration, or live security tests.
+
+test_absence_must_have_zero_marks (test_domain.DomainTests.test_absence_must_have_zero_marks) ... ok
+test_admission_conflicting_retry_is_rejected (test_domain.DomainTests.test_admission_conflicting_retry_is_rejected) ... ok
+test_admission_retry_keeps_student_and_enrollment (test_domain.DomainTests.test_admission_retry_keeps_student_and_enrollment) ... ok
+test_attendance_before_enrollment_rejected (test_domain.DomainTests.test_attendance_before_enrollment_rejected) ... ok
+test_attendance_duplicate_and_conflict (test_domain.DomainTests.test_attendance_duplicate_and_conflict) ... ok
+test_attendance_excused_late_and_unmarked (test_domain.DomainTests.test_attendance_excused_late_and_unmarked) ... ok
+test_attendance_future_rejected (test_domain.DomainTests.test_attendance_future_rejected) ... ok
+test_attendance_holiday_rejected (test_domain.DomainTests.test_attendance_holiday_rejected) ... ok
+test_attendance_zero_denominator_is_not_zero_percent (test_domain.DomainTests.test_attendance_zero_denominator_is_not_zero_percent) ... ok
+test_concurrent_payment_retries_count_once (test_domain.DomainTests.test_concurrent_payment_retries_count_once) ... ok
+test_cross_parent_enrollment_access_denied (test_domain.DomainTests.test_cross_parent_enrollment_access_denied) ... ok
+test_cross_parent_student_access_denied (test_domain.DomainTests.test_cross_parent_student_access_denied) ... ok
+test_daily_followup_is_deduplicated (test_domain.DomainTests.test_daily_followup_is_deduplicated) ... ok
+test_due_today_is_not_overdue (test_domain.DomainTests.test_due_today_is_not_overdue) ... ok
+test_duplicate_payment_different_amount_rejected (test_domain.DomainTests.test_duplicate_payment_different_amount_rejected) ... ok
+test_invalid_money_inputs_rejected (test_domain.DomainTests.test_invalid_money_inputs_rejected) ... ok
+test_overlapping_promotion_rejected (test_domain.DomainTests.test_overlapping_promotion_rejected) ... ok
+test_overpayment_is_visible_credit (test_domain.DomainTests.test_overpayment_is_visible_credit) ... ok
+test_paid_invoice_not_chased (test_domain.DomainTests.test_paid_invoice_not_chased) ... ok
+test_parent_case_normalization (test_domain.DomainTests.test_parent_case_normalization) ... ok
+test_payment_installments_and_exact_settlement (test_domain.DomainTests.test_payment_installments_and_exact_settlement) ... ok
+test_portal_disable_denies_access (test_domain.DomainTests.test_portal_disable_denies_access) ... ok
+test_promotion_preserves_history_and_retries (test_domain.DomainTests.test_promotion_preserves_history_and_retries) ... ok
+test_result_above_maximum_rejected (test_domain.DomainTests.test_result_above_maximum_rejected) ... ok
+test_result_duplicate_and_conflict (test_domain.DomainTests.test_result_duplicate_and_conflict) ... ok
+test_result_negative_rejected (test_domain.DomainTests.test_result_negative_rejected) ... ok
+test_result_wrong_section_rejected (test_domain.DomainTests.test_result_wrong_section_rejected) ... ok
+test_revocation_takes_effect_on_next_request (test_domain.DomainTests.test_revocation_takes_effect_on_next_request) ... ok
+test_unapproved_admission_rejected (test_domain.DomainTests.test_unapproved_admission_rejected) ... ok
+test_unpublished_results_hidden_and_published_locked (test_domain.DomainTests.test_unpublished_results_hidden_and_published_locked) ... ok
+test_unverified_parent_cannot_receive_access (test_domain.DomainTests.test_unverified_parent_cannot_receive_access) ... ok
+test_void_keeps_audit_history_and_reconciles (test_domain.DomainTests.test_void_keeps_audit_history_and_reconciles) ... ok
+test_weighted_performance_not_average_of_percentages (test_domain.DomainTests.test_weighted_performance_not_average_of_percentages) ... ok
+test_zero_payment_rejected (test_domain.DomainTests.test_zero_payment_rejected) ... ok
+test_all_lookup_targets_exist (test_package.PackageTests.test_all_lookup_targets_exist) ... ok
+test_api_client_rejects_non_zoho_hosts_and_paths (test_package.PackageTests.test_api_client_rejects_non_zoho_hosts_and_paths) ... ok
+test_metadata_partial_failure_is_not_success (test_package.PackageTests.test_metadata_partial_failure_is_not_success) ... ok
+test_modules_and_field_names_are_unique (test_package.PackageTests.test_modules_and_field_names_are_unique) ... ok
+test_no_claim_of_live_verification_in_schema (test_package.PackageTests.test_no_claim_of_live_verification_in_schema) ... ok
+test_parent_identity_is_not_a_page_argument (test_package.PackageTests.test_parent_identity_is_not_a_page_argument) ... ok
+test_provision_payload_includes_lookup_and_currency_dependencies (test_package.PackageTests.test_provision_payload_includes_lookup_and_currency_dependencies) ... ok
+test_unique_field_limits (test_package.PackageTests.test_unique_field_limits) ... ok
+
+----------------------------------------------------------------------
+Ran 42 tests in 0.025s
+
+OK

@@ -1,0 +1,14 @@
+void automation.sms_normalize_guardian(string guardian_id)
+{
+    guardian = zoho.crm.getRecordById("Guardians",guardian_id.toLong(),Map(),"sms_crm");
+    if(guardian.get("Email") == null) { return; }
+    normalizedEmail = guardian.get("Email").trim().toLowerCase();
+    newKey = zoho.encryption.sha256(normalizedEmail);
+    // Any email change invalidates identity verification and portal access.
+    // Verify the new mailbox and guardian identity before enabling them again.
+    if(guardian.get("Email_Key") != newKey)
+    {
+        result = zoho.crm.updateRecord("Guardians",guardian_id.toLong(),{"Email_Key":newKey,"Identity_Verified":false,"Portal_Enabled":false},{"trigger":List()},"sms_crm");
+        if(result.get("id") == null) { info "Guardian identity update failed; administrator action required"; }
+    }
+}

@@ -1,0 +1,126 @@
+map parent_data(string student_id,string enrollment_id,string category,int page_index)
+{
+    // Only call in an authenticated portal PAGE context, never a public schedule/API.
+    // A page parameter can select a child; it can NEVER supply parent identity.
+    denied = {"ok":false,"error":"You do not have access to this student record"};
+    emails = thisapp.portal.loginUserEmailid();
+    if(emails == null || emails.size() != 1) { return denied; }
+    emailKey = zoho.encryption.sha256(emails.get(0).toString().trim().toLowerCase());
+    parentQuery = "select id, Email from Guardians where (Email_Key = '"+emailKey+"' and (Identity_Verified = true and Portal_Enabled = true)) limit 2";
+    parent = thisapp.crm_query(parentQuery);
+    if(parent.get("ok") != true) { return parent; }
+    if(parent.get("data").size() != 1) { return denied; }
+    // Reject a changed email even before the CRM normalization workflow completes.
+    if(ifnull(parent.get("data").get(0).get("Email"),"").trim().toLowerCase() != emails.get(0).toString().trim().toLowerCase()) { return denied; }
+    parentId = parent.get("data").get(0).get("id").toString();
+    grants = thisapp.crm_query("select Student, Student.Full_Name as Child_Name, Student.Name as Student_Number from Student_Guardians where (Guardian = "+parentId+" and Access_Enabled = true) order by id asc limit 200");
+    if(grants.get("ok") != true) { return grants; }
+    if(grants.get("more") == true) { return {"ok":false,"error":"Please contact the school to review your account links"}; }
+    if(grants.get("data").isEmpty()) { return denied; }
+    children = grants.get("data");
+    if(student_id == "") { student_id = children.get(0).get("Student").get("id").toString(); }
+    if(!student_id.matches("[0-9]{1,30}")) { return denied; }
+    allowed = false;
+    profile = Map();
+    for each child in children
+    {
+        if(child.get("Student").get("id").toString() == student_id)
+        {
+            allowed = true;
+            profile = child;
+        }
+    }
+    if(!allowed) { return denied; }
+    enrollments = thisapp.crm_query("select id, Class_Section.Name as Section_Name, Class_Section.Academic_Year.Name as Academic_Year, Start_Date, End_Date, Enrollment_Status from Enrollments where Student = "+student_id+" order by Start_Date desc, id desc limit 200");
+    if(enrollments.get("ok") != true) { return enrollments; }
+    if(enrollments.get("more") == true || enrollments.get("data").isEmpty()) { return {"ok":false,"error":"Please contact the school about enrollment records"}; }
+    if(enrollment_id == "")
+    {
+        enrollment_id = enrollments.get("data").get(0).get("id").toString();
+        for each entry in enrollments.get("data")
+        {
+            if(entry.get("Enrollment_Status") == "Current") { enrollment_id = entry.get("id").toString(); }
+        }
+    }
+    if(!enrollment_id.matches("[0-9]{1,30}")) { return denied; }
+    allowedEnrollment = false;
+    currentEnrollment = Map();
+    for each entry in enrollments.get("data")
+    {
+        if(entry.get("id").toString() == enrollment_id)
+        {
+            allowedEnrollment = true;
+            currentEnrollment = entry;
+        }
+    }
+    if(!allowedEnrollment) { return denied; }
+    if(!{"attendance","results","fees","payments"}.contains(category) || page_index < 0 || page_index > 9999)
+    {
+        return {"ok":false,"error":"Invalid page request"};
+    }
+    offset = page_index * 10;
+    suffix = " order by id desc limit " + offset + ", 10";
+    fields = List();
+    if(category == "attendance")
+    {
+        query = "select id, Attendance_Date as Day, Attendance_Status as Status from Attendance where Enrollment = "+enrollment_id+suffix;
+        fields = {"Day","Status"};
+    }
+    if(category == "results")
+    {
+        query = "select id, Exam_Paper.Name as Paper, Marks, Max_Marks_Snapshot as Maximum, Percentage, Outcome from Results where (Enrollment = "+enrollment_id+" and Exam_Paper.Examination.Is_Published = true)"+suffix;
+        fields = {"Paper","Marks","Maximum","Percentage","Outcome"};
+    }
+    if(category == "fees")
+    {
+        query = "select id, Name as Invoice, Total_Fee as Total, Due_Date as Due from Fee_Invoices where Enrollment = "+enrollment_id+suffix;
+        fields = {"Invoice","Total","Collected","Outstanding","Credit","Status","Due"};
+    }
+    if(category == "payments")
+    {
+        query = "select id, Fee_Invoice.Name as Invoice, Amount, Payment_Date as Day, Payment_Reference as Reference, Payment_State as Status from Payments where Fee_Invoice.Enrollment = "+enrollment_id+suffix;
+        fields = {"Invoice","Amount","Day","Reference","Status"};
+    }
+    result = thisapp.crm_query(query);
+    if(result.get("ok") != true) { return result; }
+    if(category == "fees" && result.get("data").size() > 0)
+    {
+        invoiceIds = "";
+        for each invoice in result.get("data")
+        {
+            if(invoiceIds != "") { invoiceIds = invoiceIds + ","; }
+            invoiceIds = invoiceIds + invoice.get("id");
+        }
+        ledger = thisapp.crm_query("select Fee_Invoice, SUM(Amount) as Collected from Payments where (Fee_Invoice in ("+invoiceIds+") and Payment_State = 'Posted') group by Fee_Invoice limit 200");
+        if(ledger.get("ok") != true) { return ledger; }
+        balances = Map();
+        for each amountRow in ledger.get("data")
+        {
+            balances.put(amountRow.get("Fee_Invoice").get("id").toString(),ifnull(amountRow.get("Collected"),0));
+        }
+        for each invoice in result.get("data")
+        {
+            collected = ifnull(balances.get(invoice.get("id").toString()),0).toDecimal();
+            remaining = invoice.get("Total").toDecimal() - collected;
+            credit = 0;
+            status = "Unpaid";
+            if(collected > 0) { status = "Part Paid"; }
+            if(remaining == 0) { status = "Paid"; }
+            if(remaining < 0) { status = "Credit"; credit = 0-remaining; remaining = 0; }
+            invoice.put("Collected",collected);
+            invoice.put("Outstanding",remaining);
+            invoice.put("Credit",credit);
+            invoice.put("Status",status);
+        }
+    }
+    result.put("profile",profile);
+    result.put("children",children);
+    result.put("enrollments",enrollments.get("data"));
+    result.put("enrollment",currentEnrollment);
+    result.put("student_id",student_id);
+    result.put("enrollment_id",enrollment_id);
+    result.put("columns",fields);
+    result.put("category",category);
+    result.put("page_index",page_index);
+    return result;
+}
